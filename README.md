@@ -49,11 +49,18 @@ Representa o único tipo de usuário existente no sistema. Contém informações
 - `mostrarListaUsuario(Usuario): void` → Exibe as informações de um usuário.
 - `enviarInfoUsuario(): Usuario` → Coleta dados do usuário (por exemplo, via formulário) e os retorna.
 
----
-
 ##  Resumo da Arquitetura
 
 ```plaintext
 UsuarioInterfaceGrafica  -->  UsuarioGerenciador  -->  Usuario
          View                     Controller             Model
+```
 
+## Como testar a aplicação com uma coleção em memória
+
+Para executar a aplicação e testar o armazenamento de usuários em memória, siga os passos abaixo:
+
+```bash
+npm install         # Instala as dependências
+npm run dev         # Inicia o servidor em modo de desenvolvimento
+npx tsx src/testColection/test.ts  # Executa o script de teste da coleção
