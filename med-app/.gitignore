@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+
+# Compiled output
+dist/
+
+# Logs
+*.log
+
+# Environment
+.env
+
+# VSCode settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
