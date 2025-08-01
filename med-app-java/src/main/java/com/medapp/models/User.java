@@ -1,27 +1,27 @@
 package com.medapp.models;
 
 public class User {
-    private String usuario;
-    private String senha;
+    private String username;
+    private String password;
 
-    public User(String usuario, String senha) {
-        this.usuario = usuario;
-        this.senha = senha;
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
     }
 
-    public String getUsuario() {
-        return usuario;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUsuario(String usuario) {
-        this.usuario = usuario;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public String getSenha() {
-        return senha;
+    public String getPassword() {
+        return password;
     }
 
-    public void setSenha(String senha) {
-        this.senha = senha;
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
