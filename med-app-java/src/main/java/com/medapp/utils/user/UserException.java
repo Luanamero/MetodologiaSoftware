@@ -1,4 +1,4 @@
-package com.medapp.utils;
+package com.medapp.utils.user;
 
 public class UserException extends RuntimeException {
     public UserException(String message) {

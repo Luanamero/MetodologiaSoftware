@@ -1,7 +1,12 @@
 package com.medapp.use;
 
 import com.medapp.models.User;
-import com.medapp.utils.PasswordException;
+import com.medapp.utils.password.EmptyPasswordException;
+import com.medapp.utils.password.PasswordMatchesEmailException;
+import com.medapp.utils.password.PasswordMatchesUsernameException;
+import com.medapp.utils.password.PasswordTooLongException;
+import com.medapp.utils.password.PasswordTooShortException;
+import com.medapp.utils.password.PasswordTooWeakException;
 
 public class PasswordValidator {
     private static final int MIN_LENGTH = 8;
@@ -14,16 +19,16 @@ public class PasswordValidator {
         String email = user.getEmail();
         
         if (password == null) {
-            throw new PasswordException("Password cannot be null.");
+            throw new EmptyPasswordException();
         }
         
         // Check minimum and maximum length
         if (password.length() < MIN_LENGTH) {
-            throw new PasswordException("Password must be at least " + MIN_LENGTH + " characters long.");
+            throw new PasswordTooShortException(MIN_LENGTH);
         }
         
         if (password.length() > MAX_LENGTH) {
-            throw new PasswordException("Password cannot exceed " + MAX_LENGTH + " characters.");
+            throw new PasswordTooLongException(MAX_LENGTH);
         }
         
         // Check for at least 3 of the 4 character types
@@ -46,17 +51,17 @@ public class PasswordValidator {
         }
         
         if (characterTypeCount < 3) {
-            throw new PasswordException("Password must contain at least 3 of the following: uppercase letters, lowercase letters, numbers, and special characters (!@#$%^&*()_+-=[]{}|').");
+           throw new PasswordTooWeakException();
         }
         
         // Check that password is not identical to username
         if (username != null && password.equalsIgnoreCase(username)) {
-            throw new PasswordException("Password cannot be identical to username.");
+            throw new PasswordMatchesUsernameException();
         }
         
         // Check that password is not identical to email
         if (email != null && password.equalsIgnoreCase(email)) {
-            throw new PasswordException("Password cannot be identical to email address.");
+            throw new PasswordMatchesEmailException();
         }
         
         // Note: Password never expires - this is a policy note, no validation needed
