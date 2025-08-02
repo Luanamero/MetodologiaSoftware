@@ -1,7 +1,6 @@
 package com.medapp.views;
 
 import com.medapp.controllers.UserController;
-import com.medapp.models.User;
 
 public class UserInterface {
     private UserController controller;
@@ -12,6 +11,10 @@ public class UserInterface {
 
     public String showUserList() {
         return controller.listUsers();
+    }
+
+    public String sendUserInfo(String username, String password, String email) {
+        return controller.registerUserByCredentials(username, password, email);
     }
 
     public String sendUserInfo(String username, String password) {
