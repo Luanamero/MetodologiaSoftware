@@ -1,12 +1,50 @@
 package com.medapp;
 
 import com.medapp.controllers.UserController;
+import com.medapp.infra.FileRepository;
 import com.medapp.infra.RAMRepository;
+import com.medapp.infra.Repository;
 import com.medapp.views.UserInterface;
+import java.util.Properties;
+
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        UserController controller = new UserController(new RAMRepository());
+
+        Repository repository;
+        Properties props = new Properties();
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("file")) {
+            System.out.println("Argument selected: file. Using FileRepository.");
+            repository = new FileRepository();
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("ram")) {
+            System.out.println("Argument selected: ram. Using RAMRepository.");
+            repository = new RAMRepository();
+        } else {
+            try {
+                props.load(new FileInputStream("config.properties"));
+                String type = props.getProperty("tipoRepositorio", "ram");
+
+                if (type.equalsIgnoreCase("file")) {
+                    System.out.println("Config selected: file. Using FileRepository.");
+                    repository = new FileRepository();
+                } else if (type.equalsIgnoreCase("ram")) {
+                    System.out.println("Config selected: ram. Using RAMRepository.");
+                    repository = new RAMRepository();
+                } else {
+                    System.out.println("Invalid config. Using RAMRepository as default.");
+                    repository = new RAMRepository();
+                }
+            } catch (IOException e) {
+                System.out.println("Could not read config file or command line arguments. Using RAMRepository as default.");
+                repository = new RAMRepository();
+            }
+        }
+
+        UserController controller = new UserController(repository);
         UserInterface ui = new UserInterface(controller);
 
         // Test valid users with email
