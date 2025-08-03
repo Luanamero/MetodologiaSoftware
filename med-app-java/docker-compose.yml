@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  medapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medapp:latest
+    container_name: medapp-container
+    volumes:
+      # Volume para persistir os arquivos de usuários
+      - ./users:/app/users
+      # Volume para configurações personalizadas
+      - ./config.properties:/app/config.properties
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - APP_PROFILE=docker
+    restart: unless-stopped
+    # Comentado pois é uma aplicação CLI, não web
+    # ports:
+    #   - "3000:3000"
+    
+  # Serviço alternativo para executar com RAMRepository
+  medapp-ram:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medapp:latest
+    container_name: medapp-ram-container
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - APP_PROFILE=docker
+    command: ["mvn", "exec:java", "-Dexec.args=ram"]
+    profiles:
+      - ram
+    restart: "no"
+
+  # Serviço para desenvolvimento (com volume de código)
+  medapp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medapp:latest
+    container_name: medapp-dev-container
+    volumes:
+      - .:/app
+      - maven-cache:/root/.m2
+    environment:
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - APP_PROFILE=development
+    command: ["mvn", "exec:java", "-Dexec.args=file"]
+    profiles:
+      - dev
+    restart: "no"
+
+volumes:
+  maven-cache:
