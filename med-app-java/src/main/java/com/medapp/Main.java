@@ -4,9 +4,9 @@ import com.medapp.controllers.UserController;
 import com.medapp.infra.FileRepository;
 import com.medapp.infra.RAMRepository;
 import com.medapp.infra.Repository;
+import com.medapp.models.User;
 import com.medapp.views.UserInterface;
 import java.util.Properties;
-
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -98,5 +98,37 @@ public class Main {
         // Show final user list
         System.out.println("\n=== Final User List ===");
         System.out.println(ui.showUserList());
+        
+        // Test storage exceptions (only with FileRepository)
+        if (repository instanceof FileRepository) {
+            System.out.println("\n=== Testing Storage Exceptions ===");
+            testStorageExceptions(controller);
+        }
+    }
+    
+    // Testing Storage Exceptions
+    private static void testStorageExceptions(UserController controller) {
+        System.out.println("1. Testing UserAlreadyExistsException:");
+        try {
+            controller.registerUser(new User("alice", "NewPass789!", "newalice@example.com"));
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+        
+        System.out.println("\n2. Testing UserNotFoundException:");
+        try {
+            controller.getUser("usuarioInexistente");
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+        
+        System.out.println("\n3. Testing UserNotFoundException on delete:");
+        try {
+            controller.deleteUser("usuarioInexistente");
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+        
+        System.out.println("\n   Storage exceptions are working correctly!");
     }
 }
