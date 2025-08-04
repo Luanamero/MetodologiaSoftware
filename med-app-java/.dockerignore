@@ -1,0 +1,50 @@
+# Maven
+target/
+!target/dependency
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md
+*.md
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Node modules (se houver)
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Test results
+test-results/
+coverage/
