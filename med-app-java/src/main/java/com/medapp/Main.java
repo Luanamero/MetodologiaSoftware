@@ -3,9 +3,11 @@ package com.medapp;
 import com.medapp.controllers.UserController;
 import com.medapp.infra.FileRepository;
 import com.medapp.infra.RAMRepository;
+import com.medapp.infra.DBRepository;
 import com.medapp.infra.Repository;
 import com.medapp.models.User;
 import com.medapp.views.UserInterface;
+import com.medapp.utils.repository.*;
 import java.util.Properties;
 
 import java.io.FileInputStream;
@@ -23,6 +25,9 @@ public class Main {
         } else if (args.length > 0 && args[0].equalsIgnoreCase("ram")) {
             System.out.println("Argument selected: ram. Using RAMRepository.");
             repository = new RAMRepository();
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("db")) {
+            System.out.println("Argument selected: db. Using DBRepository.");
+            repository = new DBRepository();
         } else {
             try {
                 props.load(new FileInputStream("config.properties"));
@@ -34,6 +39,9 @@ public class Main {
                 } else if (type.equalsIgnoreCase("ram")) {
                     System.out.println("Config selected: ram. Using RAMRepository.");
                     repository = new RAMRepository();
+                } else if (type.equalsIgnoreCase("db")) {
+                    System.out.println("Config selected: db. Using DBRepository.");
+                    repository = new DBRepository();
                 } else {
                     System.out.println("Invalid config. Using RAMRepository as default.");
                     repository = new RAMRepository();
@@ -104,6 +112,12 @@ public class Main {
             System.out.println("\n=== Testing Storage Exceptions ===");
             testStorageExceptions(controller);
         }
+        
+        // Test repository exceptions (with DBRepository)
+        if (repository instanceof DBRepository) {
+            System.out.println("\n=== Testing Repository Exceptions ===");
+            testRepositoryExceptions(controller, (DBRepository) repository);
+        }
     }
     
     // Testing Storage Exceptions
@@ -127,8 +141,54 @@ public class Main {
             controller.deleteUser("usuarioInexistente");
         } catch (Exception e) {
             System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }        
+    }
+    
+    // Testing Repository Exceptions
+    private static void testRepositoryExceptions(UserController controller, DBRepository dbRepo) {
+        System.out.println("1. Testing RepositoryConfigurationException:");
+        dbRepo.setConfigured(false);
+        try {
+            controller.registerUser(new User("testuser", "TestPass123!", "test@example.com"));
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+        dbRepo.setConfigured(true); // Reset
+        
+        System.out.println("\n2. Testing RepositoryUnavailableException:");
+        dbRepo.setAvailable(false);
+        try {
+            String result = controller.listUsers();
+            System.out.println("   Result: " + result);
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+        dbRepo.setAvailable(true); // Reset
+        
+        System.out.println("\n3. Testing RepositoryIntegrityException:");
+        try {
+            // First register admin user
+            controller.registerUser(new User("admin", "AdminPass123!", "admin@example.com"));
+            // Then try to delete it (should trigger integrity exception)
+            controller.deleteUser("admin");
+        } catch (Exception e) {
+            System.out.println("   Caught: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
         
-        System.out.println("\n   Storage exceptions are working correctly!");
+        System.out.println("\n4. Testing RepositoryTimeoutException (may need multiple attempts):");
+        for (int i = 0; i < 5; i++) {
+            try {
+                controller.registerUser(new User("user" + i, "UserPass123!", "user" + i + "@example.com"));
+                System.out.println("   Attempt " + (i+1) + ": Success");
+                break; // If successful, break the loop
+            } catch (RepositoryTimeoutException e) {
+                System.out.println("   Attempt " + (i+1) + ": Caught RepositoryTimeoutException - " + e.getMessage());
+                break; // Found the timeout, break the loop
+            } catch (Exception e) {
+                // Other exceptions, continue trying
+                System.out.println("   Attempt " + (i+1) + ": Other exception - " + e.getMessage());
+            }
+        }
+        
     }
 }
