@@ -37,7 +37,9 @@ med-app-java/
 │   │   └── PasswordValidator.java  # Validação de senha
 │   └── utils/                      # Exceções personalizadas
 │       ├── password/               # Exceções de senha
-│       └── user/                   # Exceções de usuário
+│       ├── user/                   # Exceções de usuário
+│       ├── storage/                # Exceções de armazenamento
+│       └── repository/             # Exceções de repositório
 ├── config.properties               # Configurações do sistema
 ├── users/                          # Diretório de armazenamento de usuários
 └── pom.xml                         # Configuração Maven
@@ -70,21 +72,25 @@ med-app-java/
 ### Opções de Armazenamento
 
 1. **RAMRepository**: Armazenamento em memória (volátil)
-2. **FileRepository**: Armazenamento em arquivos JSON
-3. **DBRepository**: Preparado para implementação com banco de dados
+2. **FileRepository**: Armazenamento em arquivos binários
+3. **DBRepository**: Simulação de banco de dados com tratamento avançado de exceções
 
 ## ⚙️ Configuração
 
 ### Arquivo `config.properties`
 ```properties
-# Tipo de repositório: "ram" ou "file"
-tipoRepositorio=file
+# Tipo de repositório: "ram", "file" ou "db"
+# ram: Armazena dados em memória (perdidos ao fechar o programa)
+# file: Armazena dados em arquivos binários no disco
+# db: Simula um banco de dados com comportamentos de repositório
+tipoRepositorio=db
 ```
 
 ### Argumentos de Linha de Comando
 ```bash
 java -jar med-app-java.jar file    # Usar FileRepository
 java -jar med-app-java.jar ram     # Usar RAMRepository
+java -jar med-app-java.jar db      # Usar DBRepository (com exceções de repositório)
 ```
 
 ## 🔧 Tecnologias Utilizadas
@@ -125,6 +131,7 @@ mvn exec:java
 # Com argumentos específicos
 mvn exec:java -Dexec.args="file"
 mvn exec:java -Dexec.args="ram"
+mvn exec:java -Dexec.args="db"
 ```
 
 3. **Executar testes:**
@@ -138,6 +145,22 @@ mvn clean package
 java -jar target/med-app-java-1.0-SNAPSHOT.jar
 ```
 
+### Execução com Java Direto (Desenvolvimento)
+
+```bash
+# Compilar todas as classes
+cd med-app-java
+javac -cp . src/main/java/com/medapp/**/*.java
+
+# Executar com diferentes repositórios
+java -cp . com.medapp.Main ram    # Teste básico em memória
+java -cp . com.medapp.Main file   # Teste com armazenamento em arquivo
+java -cp . com.medapp.Main db     # Teste completo com exceções de repositório
+
+# Executar sem argumentos (usa config.properties)
+java -cp . com.medapp.Main
+```
+
 ## 📝 Exemplos de Uso
 
 ### Usuários Válidos
@@ -147,7 +170,7 @@ ui.sendUserInfo("alice", "StrongPass123!", "alice@example.com");
 ui.sendUserInfo("bob", "MySecure456@", "bob@example.com");
 ```
 
-### Casos de Erro
+### Casos de Erro de Validação
 ```java
 // Username com números
 ui.sendUserInfo("alice123", "StrongPass789!", "alice123@example.com");
@@ -225,6 +248,9 @@ docker run --rm -v $(pwd)/users:/app/users medapp:latest
 
 # Executar com RAMRepository
 docker run --rm medapp:latest mvn exec:java -Dexec.args=ram
+
+# Executar com DBRepository (teste de exceções)
+docker run --rm medapp:latest mvn exec:java -Dexec.args=db
 ```
 
 ### Scripts Auxiliares
@@ -236,7 +262,7 @@ O projeto inclui scripts para facilitar o uso do Docker:
 ./scripts/docker-build.sh [tag]
 
 # Executar aplicação
-./scripts/docker-run.sh [ram|file|dev]
+./scripts/docker-run.sh [ram|file|dev|db]
 
 # Limpeza de recursos
 ./scripts/docker-clean.sh [--all]
