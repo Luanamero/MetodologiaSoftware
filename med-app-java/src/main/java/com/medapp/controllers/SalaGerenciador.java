@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class SalaGerenciador {
     private final Repository repository;
@@ -82,8 +83,8 @@ public class SalaGerenciador {
 
     public List<Sala> listarSalasDisponiveis() {
         return salas.stream()
-                   .filter(Sala::isDisponivel)
-                   .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            .filter(Sala::isDisponivel)
+            .collect(Collectors.toList());
     }
 
     public String listarSalasFormatado() {
@@ -110,7 +111,7 @@ public class SalaGerenciador {
     public String agendarSala(String salaId, LocalDateTime dataHora) {
         try {
             Optional<Sala> salaOpt = findSalaById(salaId);
-            if (!salaOpt.isPresent()) {
+            if (salaOpt.isEmpty()) {
                 return formatarErroSala("Sala com ID '%s' não encontrada.", salaId);
             }
 
@@ -130,7 +131,7 @@ public class SalaGerenciador {
     public String liberarSala(String salaId) {
         try {
             Optional<Sala> salaOpt = findSalaById(salaId);
-            if (!salaOpt.isPresent()) {
+            if (salaOpt.isEmpty()) {
                 return formatarErroSala("Sala com ID '%s' não encontrada.", salaId);
             }
 
@@ -147,7 +148,7 @@ public class SalaGerenciador {
     public String adicionarEquipamento(String salaId, String equipamento) {
         try {
             Optional<Sala> salaOpt = findSalaById(salaId);
-            if (!salaOpt.isPresent()) {
+            if (salaOpt.isEmpty()) {
                 return formatarErroSala("Sala com ID '%s' não encontrada.", salaId);
             }
 

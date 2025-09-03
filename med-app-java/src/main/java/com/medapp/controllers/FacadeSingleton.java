@@ -9,6 +9,7 @@ import java.util.List;
 
 public class FacadeSingleton {
     private static volatile FacadeSingleton instance;
+    private static volatile String repositoryType;
     private final UsuarioGerenciador usuarioGerenciador;
     private final SalaGerenciador salaGerenciador;
 
@@ -18,14 +19,47 @@ public class FacadeSingleton {
     }
 
     public static FacadeSingleton getInstance(Repository repository) {
+        if (repository == null) {
+            throw new IllegalArgumentException("Repository cannot be null");
+        }
+        
+        String currentRepositoryType = repository.getClass().getSimpleName();
+        
         if (instance == null) {
             synchronized (FacadeSingleton.class) {
                 if (instance == null) {
                     instance = new FacadeSingleton(repository);
+                    repositoryType = currentRepositoryType;
                 }
+            }
+        } else {
+            // Verifica se o tipo de repositório é consistente
+            if (!currentRepositoryType.equals(repositoryType)) {
+                throw new IllegalStateException(
+                    String.format("FacadeSingleton already initialized with %s repository. " +
+                                "Cannot reinitialize with %s repository. " +
+                                "Use reset() method if you need to change repository type.",
+                                repositoryType, currentRepositoryType)
+                );
             }
         }
         return instance;
+    }
+    
+    /**
+     * Reset the singleton instance (mainly for testing purposes)
+     * WARNING: This should only be used in controlled environments like tests
+     */
+    public static synchronized void reset() {
+        instance = null;
+        repositoryType = null;
+    }
+    
+    /**
+     * Get the current repository type (for debugging/monitoring purposes)
+     */
+    public static String getCurrentRepositoryType() {
+        return repositoryType;
     }
 
     // Métodos da interface especificada
