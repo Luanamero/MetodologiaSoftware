@@ -2,11 +2,11 @@ package com.medapp.models;
 
 import java.io.Serializable;
 
-public class User implements Serializable {
+public abstract class User implements Serializable {
     private static final long serialVersionUID = 1L;
-    private String username;
-    private String password;
-    private String email;
+    protected String username;
+    protected String password;
+    protected String email;
 
     public User() {
         // Construtor padrão necessário para Jackson
@@ -41,4 +41,6 @@ public class User implements Serializable {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public abstract String getTipoUsuario();
 }

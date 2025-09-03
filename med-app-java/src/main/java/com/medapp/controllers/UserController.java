@@ -39,16 +39,6 @@ public class UserController {
         }
     }
 
-    public String registerUserByCredentials(String username, String password, String email) {
-        User newUser = new User(username, password, email);
-        return registerUser(newUser);
-    }
-
-    public String registerUserByCredentials(String username, String password) {
-        // Default method for backward compatibility - requires email
-        throw new IllegalArgumentException("Email is required for user registration. Use registerUserByCredentials(username, password, email) instead.");
-    }
-
     public String listUsers() {
         try {
             List<User> users = userRepository.getAllUsers();
