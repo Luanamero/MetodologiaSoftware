@@ -6,332 +6,304 @@ Sistema de gerenciamento de usuários em Java desenvolvido seguindo o padrão **
 
 O MedApp é uma aplicação Java que permite cadastrar e gerenciar usuários com validação de dados rigorosa. O sistema oferece flexibilidade na escolha do método de armazenamento (memória ou arquivo) e implementa validações completas para nomes de usuário e senhas.
 
-## 🏗️ Arquitetura
+# Cirurgia Sem Fronteiras v2.0.0
 
-O sistema implementa o padrão **MVC**:
+## 📋 Funcionalidades Principais
 
-- **Model** → `User` - Representa os dados do usuário
-- **View** → `UserInterface` - Interface de interação com o usuário  
-- **Controller** → `UserController` - Gerencia a lógica de negócio
+### 👥 Gerenciamento de Usuários
+- **Hierarquia de Usuários**: Sistema baseado em herança com classe abstrata `User`
+  - **Administrador**: Usuários com diferentes níveis de permissão (SUPER/NORMAL)
+  - **Paciente**: Dados médicos completos (CPF, data nascimento, contato)
+  - **Profissional de Saúde**: Informações profissionais (CRM, especialidade, departamento)
 
-### Estrutura de Diretórios
+### 🏥 Gerenciamento de Salas
+- **Cadastro de Salas**: Salas médicas com equipamentos e disponibilidade
+- **Agendamento**: Sistema de reserva com controle de horários
+- **Monitoramento**: Status em tempo real das salas disponíveis
 
+### 🔧 Validações Robustas
+- **Username**: Não permite números, caracteres especiais ou tamanhos inadequados
+- **Password**: Verificação de força (maiúscula, minúscula, números, símbolos)
+- **Email**: Validação de formato e domínios válidos
+- **Dados Médicos**: Validação de CPF, CRM e outros dados específicos
+
+### 💾 Múltiplas Opções de Persistência
+- **RAM**: Armazenamento em memória (ideal para testes rápidos)
+- **Banco de Dados**: Simulação de BD com timeouts e validações
+- **Arquivo**: Persistência em arquivos binários no sistema
+
+## 🏗️ Arquitetura e Padrões
+
+### Design Patterns Implementados
+- **Singleton**: `FacadeSingleton` para ponto único de entrada
+- **Facade**: Simplificação da interface do sistema
+- **Factory**: `RepositoryFactory` para criação de repositórios
+- **Repository**: Abstração da camada de persistência
+- **Abstract Factory**: Criação de diferentes tipos de usuários
+
+### Princípios SOLID
+- **SRP**: Cada classe tem uma responsabilidade única
+- **OCP**: Extensível para novos tipos de usuários e repositórios
+- **LSP**: Subclasses substituem classes pai sem quebrar funcionalidade
+- **ISP**: Interfaces específicas e coesas
+- **DIP**: Dependência de abstrações, não implementações concretas
+
+### Estrutura do Projeto
 ```
-med-app-java/
-├── src/main/java/com/medapp/
-│   ├── Main.java                    # Ponto de entrada da aplicação
-│   ├── Index.java                   # Servidor de desenvolvimento
-│   ├── models/
-│   │   └── User.java               # Modelo de dados do usuário
-│   ├── controllers/
-│   │   └── UserController.java     # Controlador principal
-│   ├── views/
-│   │   └── UserInterface.java      # Interface do usuário
-│   ├── infra/                      # Camada de infraestrutura
-│   │   ├── Repository.java         # Interface de repositório
-│   │   ├── RAMRepository.java      # Implementação em memória
-│   │   ├── FileRepository.java     # Implementação em arquivo
-│   │   └── DBRepository.java       # Implementação para banco de dados
-│   ├── use/                        # Casos de uso e validadores
-│   │   ├── UsernameValidator.java  # Validação de username
-│   │   └── PasswordValidator.java  # Validação de senha
-│   └── utils/                      # Exceções personalizadas
-│       ├── password/               # Exceções de senha
-│       ├── user/                   # Exceções de usuário
-│       ├── storage/                # Exceções de armazenamento
-│       └── repository/             # Exceções de repositório
-├── config.properties               # Configurações do sistema
-├── users/                          # Diretório de armazenamento de usuários
-└── pom.xml                         # Configuração Maven
-```
-
-## 🚀 Funcionalidades
-
-### Cadastro de Usuários
-- Cadastro com username, senha e email
-- Validação automática de dados
-- Armazenamento configurável (RAM ou arquivo)
-
-### Validações Implementadas
-
-#### Username
-- ❌ Não pode estar vazio
-- ❌ Não pode conter números
-- ❌ Máximo de 12 caracteres
-
-#### Senha
-- ✅ Mínimo 8 caracteres, máximo 128
-- ✅ Deve conter pelo menos 3 dos seguintes tipos:
-  - Letras maiúsculas (A-Z)
-  - Letras minúsculas (a-z)
-  - Números (0-9)
-  - Caracteres especiais (!@#$%^&*()_+-=[]{}|')
-- ❌ Não pode ser igual ao username
-- ❌ Não pode ser igual ao email
-
-### Opções de Armazenamento
-
-1. **RAMRepository**: Armazenamento em memória (volátil)
-2. **FileRepository**: Armazenamento em arquivos binários
-3. **DBRepository**: Simulação de banco de dados com tratamento avançado de exceções
-
-## ⚙️ Configuração
-
-### Arquivo `config.properties`
-```properties
-# Tipo de repositório: "ram", "file" ou "db"
-# ram: Armazena dados em memória (perdidos ao fechar o programa)
-# file: Armazena dados em arquivos binários no disco
-# db: Simula um banco de dados com comportamentos de repositório
-tipoRepositorio=db
+src/main/java/com/medapp/
+├── controllers/           # Controladores e lógica de negócio
+│   ├── FacadeSingleton.java
+│   ├── UsuarioGerenciador.java
+│   ├── SalaGerenciador.java
+│   └── UserController.java
+├── models/               # Modelos de domínio
+│   ├── User.java (abstract)
+│   ├── Administrador.java
+│   ├── Paciente.java
+│   ├── ProfissionalSaude.java
+│   └── Sala.java
+├── infra/                # Infraestrutura e repositórios
+│   ├── Repository.java
+│   ├── RepositoryFactory.java
+│   ├── RAMRepository.java
+│   ├── DBRepository.java
+│   └── FileRepository.java
+├── use/                  # Casos de uso e validações
+│   ├── UsernameValidator.java
+│   └── PasswordValidator.java
+├── utils/                # Exceções customizadas
+│   ├── password/
+│   ├── repository/
+│   ├── storage/
+│   └── user/
+└── views/                # Interface com usuário
+    └── UserInterface.java
 ```
 
-### Argumentos de Linha de Comando
-```bash
-java -jar med-app-java.jar file    # Usar FileRepository
-java -jar med-app-java.jar ram     # Usar RAMRepository
-java -jar med-app-java.jar db      # Usar DBRepository (com exceções de repositório)
-```
-
-## 🔧 Tecnologias Utilizadas
-
-- **Java 17**
-- **Maven** - Gerenciamento de dependências
-- **Jackson** - Serialização/deserialização JSON
-- **JUnit 4** - Testes unitários
-
-### Dependências
-```xml
-<dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.17.1</version>
-</dependency>
-```
-
-## 🏃‍♂️ Como Executar
+## 🚀 Como Executar
 
 ### Pré-requisitos
 - Java 17 ou superior
-- Maven 3.6+
+- Sistema operacional: Linux, macOS ou Windows
 
-### Compilação e Execução
-
-1. **Compilar o projeto:**
+### Compilação
 ```bash
 cd med-app-java
-mvn clean compile
+javac -cp "src/main/java" src/main/java/com/medapp/*.java src/main/java/com/medapp/*/*.java
 ```
 
-2. **Executar a aplicação:**
+### Execução
+
+#### 1. Modo Demonstração (Padrão)
 ```bash
-# Usando Maven
-mvn exec:java
+# Demonstração completa com todos os tipos de repositório
+java -cp "src/main/java" com.medapp.Main
 
-# Com argumentos específicos
-mvn exec:java -Dexec.args="file"
-mvn exec:java -Dexec.args="ram"
-mvn exec:java -Dexec.args="db"
+# A demonstração mostra todas as funcionalidades do sistema sequencialmente:
+# - Criação de diferentes tipos de usuários
+# - Gerenciamento de salas e agendamentos  
+# - Validações de segurança
+# - Integração e consultas do sistema
 ```
 
-3. **Executar testes:**
+#### 2. Modo de Testes Automáticos
 ```bash
-mvn test
+# Testes com repositório RAM (padrão)
+java -cp "src/main/java" com.medapp.Main --test
+
+# Testes com repositório específico
+java -cp "src/main/java" com.medapp.Main --test ram
+java -cp "src/main/java" com.medapp.Main --test db
+java -cp "src/main/java" com.medapp.Main --test file
 ```
 
-4. **Gerar JAR executável:**
-```bash
-mvn clean package
-java -jar target/med-app-java-1.0-SNAPSHOT.jar
+### Demonstração Completa das Funcionalidades
+
+O modo padrão executa uma demonstração declarativa que mostra:
+
+#### Gerenciamento de Usuários
+- **Administrador**: Criação com nível de permissão SUPER
+- **Paciente**: Cadastro com dados médicos completos (CPF, data nascimento, contato)
+- **Profissional de Saúde**: Registro com CRM, especialidade e departamento
+
+#### Gerenciamento de Salas
+- **Listagem**: Visualização de todas as salas disponíveis
+- **Agendamento**: Reserva de salas para procedimentos médicos
+- **Monitoramento**: Status atualizado após agendamentos
+
+#### Validações de Segurança
+- **Username**: Rejeição de nomes com números
+- **Password**: Verificação de força de senha
+- **Email**: Validação de formato
+- **Duplicação**: Prevenção de usuários duplicados
+
+#### Integração do Sistema
+- **Consultas**: Listagem e busca de usuários
+- **Detalhamento**: Informações específicas por usuário
+- **Status**: Visão geral completa do sistema
+
+### Exemplo de Saída da Demonstração
+```
+=== SISTEMA MÉDICO - CIRURGIA SEM FRONTEIRAS v2.0.0 ===
+Demonstração completa das funcionalidades do sistema
+
+=== DEMONSTRAÇÃO COM REPOSITÓRIO RAM ===
+✓ Sistema inicializado com repositório RAM
+
+--- GERENCIAMENTO DE USUÁRIOS ---
+1. Criando Administrador:
+   → Administrador 'admin' criado com sucesso.
+
+2. Criando Paciente:
+   → Paciente 'maria' criado com sucesso.
+
+3. Criando Profissional de Saúde:
+   → Profissional de Saúde 'dr.silva' criado com sucesso.
+
+--- GERENCIAMENTO DE SALAS ---
+1. Listando salas disponíveis:
+   → Salas registradas: SALA001, SALA002, SALA003...
+
+2. Agendando sala para cirurgia:
+   → Sala SALA001 agendada com sucesso para 2025-09-10T14:30
+
+--- DEMONSTRAÇÃO DE VALIDAÇÕES ---
+1. Tentativa de username com números (deve falhar):
+   → Erro: Username não pode conter números
+
+2. Tentativa de senha fraca (deve falhar):
+   → Erro: Password muito fraca
 ```
 
-### Execução com Java Direto (Desenvolvimento)
+## 🧪 Testes
 
-```bash
-# Compilar todas as classes
-cd med-app-java
-javac -cp . src/main/java/com/medapp/**/*.java
+### Testes Automáticos Incluídos
 
-# Executar com diferentes repositórios
-java -cp . com.medapp.Main ram    # Teste básico em memória
-java -cp . com.medapp.Main file   # Teste com armazenamento em arquivo
-java -cp . com.medapp.Main db     # Teste completo com exceções de repositório
+#### Criação de Usuários
+- ✅ Administrador com diferentes níveis de permissão
+- ✅ Paciente com dados médicos completos
+- ✅ Profissional de Saúde com credenciais
 
-# Executar sem argumentos (usa config.properties)
-java -cp . com.medapp.Main
+#### Gerenciamento de Salas
+- ✅ Listagem de salas disponíveis
+- ✅ Agendamento de salas médicas
+- ✅ Controle de disponibilidade
+
+#### Validações de Segurança
+- ✅ Username sem números (política de segurança)
+- ✅ Password com força adequada
+- ✅ Email com formato válido
+- ✅ Dados médicos consistentes
+
+#### Integração do Sistema
+- ✅ Listagem de usuários
+- ✅ Exibição de informações detalhadas
+- ✅ Status completo do sistema
+
+### Exemplo de Saída dos Testes
+```
+=== MODO DE TESTES AUTOMÁTICOS ===
+Tipo de repositório para testes: RAM
+✓ Sistema inicializado com sucesso
+
+=== CRIAÇÃO DE USUÁRIOS ===
+✓ Criar Administrador
+✓ Criar Paciente
+✓ Criar Profissional de Saúde
+
+=== GERENCIAMENTO DE SALAS ===
+✓ Listar Salas
+✓ Agendar Sala
+
+=== VALIDAÇÕES ===
+✓ Validação Username com números
+✓ Validação Password fraca
+✓ Validação Email inválido
+
+=== INTEGRAÇÃO DO SISTEMA ===
+✓ Listar Usuários
+✓ Mostrar Informações do Usuário
+✓ Status do Sistema
+
+=== RESUMO DOS TESTES ===
+Total de testes: 10
+Testes aprovados: 10
+Testes falharam: 0
+Taxa de sucesso: 100.0%
+
+TODOS OS TESTES PASSARAM!
 ```
 
-## 📝 Exemplos de Uso
+## 📊 Tipos de Repositório
 
-### Usuários Válidos
-```java
-// Cadastro bem-sucedido
-ui.sendUserInfo("alice", "StrongPass123!", "alice@example.com");
-ui.sendUserInfo("bob", "MySecure456@", "bob@example.com");
-```
+### 1. RAM Repository
+- **Uso**: Testes rápidos e desenvolvimento
+- **Características**: Dados voláteis, alta performance
+- **Ideal para**: Prototipagem e testes unitários
 
-### Casos de Erro de Validação
-```java
-// Username com números
-ui.sendUserInfo("alice123", "StrongPass789!", "alice123@example.com");
-// Erro: "Username cannot contain numbers."
+### 2. Database Repository (Simulado)
+- **Uso**: Simulação de ambiente de produção
+- **Características**: Simula timeouts, erros de conexão, validações
+- **Ideal para**: Testes de robustez e tratamento de erros
 
-// Senha fraca
-ui.sendUserInfo("carol", "weak", "carol@example.com");
-// Erro: "Password must contain at least 3 of the following: uppercase letters, lowercase letters, numbers, and special characters..."
+### 3. File Repository
+- **Uso**: Persistência local de dados
+- **Características**: Arquivos binários, serialização Java
+- **Ideal para**: Pequenas instalações e dados locais
 
-// Senha igual ao username
-ui.sendUserInfo("dave", "dave", "dave@example.com");
-// Erro: "Password cannot be the same as username."
-```
+## 🔧 Tratamento de Erros
 
-## 📊 Estrutura de Dados
+O sistema possui tratamento robusto de exceções:
 
-### Modelo User
-```java
-public class User {
-    private String username;
-    private String password;
-    private String email;
-    
-    // Construtores, getters e setters
-}
-```
+### Exceções de Usuário
+- `EmptyUsernameException`
+- `InvalidUsernameException`
+- `UsernameContainsNumbersException`
+- `UsernameTooLongException`
 
-### Formato JSON (FileRepository)
-```json
-{
-    "username": "alice",
-    "password": "StrongPass123!",
-    "email": "alice@example.com"
-}
-```
+### Exceções de Password
+- `EmptyPasswordException`
+- `PasswordTooShortException`
+- `PasswordTooLongException`
+- `PasswordTooWeakException`
+- `PasswordMatchesUsernameException`
+- `PasswordMatchesEmailException`
 
-## 🐳 Executando com Docker
+### Exceções de Repositório
+- `RepositoryConfigurationException`
+- `RepositoryTimeoutException`
+- `RepositoryUnavailableException`
+- `RepositoryIntegrityException`
 
-### Pré-requisitos Docker
-- Docker 20.10+
-- Docker Compose 2.0+
+### Exceções de Storage
+- `UserAlreadyExistsException`
+- `UserNotFoundException`
+- `FileStorageException`
+- `StorageCorruptedException`
+- `InsufficientStorageSpaceException`
 
-### Execução Rápida
+## 🎯 Novidades da Versão 2.0.0
 
-**Opção 1: Script interativo**
-```bash
-# Execute o script na raiz do projeto
-cd med-app-java
-./docker-start.sh
-```
+### Principais Melhorias
+1. **Hierarquia de Usuários**: Substituição do sistema de usuário único por hierarquia especializada
+2. **Gestão de Salas**: Sistema completo de gerenciamento de salas médicas
+3. **Múltiplos Repositórios**: Suporte a RAM, BD e Arquivo
+4. **Demonstração Declarativa**: Mostra todas as funcionalidades automaticamente
+5. **Testes Integrados**: Bateria de testes automáticos no próprio sistema
+6. **Arquitetura SOLID**: Reestruturação completa seguindo princípios de design
 
-**Opção 2: Docker Compose direto**
-```bash
-cd med-app-java
+### Melhorias Técnicas
+- **Factory Pattern**: Criação dinâmica de repositórios
+- **Facade Singleton**: Ponto único de entrada thread-safe
+- **Validation Layer**: Camada dedicada de validações
+- **Exception Handling**: Tratamento robusto e específico de erros
+- **Clean Architecture**: Separação clara de responsabilidades
+- **Demonstrative Testing**: Testes declarativos que mostram funcionalidades completas
 
-# FileRepository (dados persistidos)
-docker-compose up medapp
+## 📝 Licença
 
-# RAMRepository (dados em memória)
-docker-compose --profile ram up medapp-ram
-
-# Modo desenvolvimento ✅ Recompilação automática ao mudar código
-docker-compose --profile dev up medapp-dev
-```
-
-**Opção 3: Docker run direto**
-```bash
-cd med-app-java
-
-# Build da imagem
-docker build -t medapp:latest .
-
-# Executar com FileRepository
-docker run --rm -v $(pwd)/users:/app/users medapp:latest
-
-# Executar com RAMRepository
-docker run --rm medapp:latest mvn exec:java -Dexec.args=ram
-
-# Executar com DBRepository (teste de exceções)
-docker run --rm medapp:latest mvn exec:java -Dexec.args=db
-```
-
-### Scripts Auxiliares
-
-O projeto inclui scripts para facilitar o uso do Docker:
-
-```bash
-# Build da imagem
-./scripts/docker-build.sh [tag]
-
-# Executar aplicação
-./scripts/docker-run.sh [ram|file|dev|db]
-
-# Limpeza de recursos
-./scripts/docker-clean.sh [--all]
-```
-
-### Configuração Docker
-
-**Dockerfile**: Imagem baseada em OpenJDK 17 com Maven
-**docker-compose.yml**: Serviços pré-configurados para diferentes cenários
-**Volumes**: Persistência de dados de usuários e cache Maven
-
-### Volumes Persistentes
-
-- `./users:/app/users` - Arquivos de usuários (FileRepository)
-- `maven-cache` - Cache de dependências Maven
-- `./config.properties:/app/config.properties` - Configurações personalizadas
-
-### Variáveis de Ambiente
-
-```bash
-JAVA_OPTS="-Xmx512m -Xms256m"    # Configurações da JVM
-APP_PROFILE="docker"              # Perfil da aplicação
-```
-
-### Troubleshooting Docker
-
-**Problema**: Permissões em sistemas Unix
-```bash
-# Dar permissão aos scripts
-chmod +x scripts/*.sh
-chmod +x docker-start.sh
-```
-
-**Problema**: Build lento
-```bash
-# Usar cache do Docker
-docker build -t medapp:latest . --cache-from medapp:latest
-```
-
-**Problema**: Espaço em disco
-```bash
-# Limpeza completa
-./scripts/docker-clean.sh --all
-docker system prune -a
-```
-
-## 🧪 Demonstração
-
-A aplicação inclui casos de teste automáticos que demonstram:
-
-1. ✅ Cadastro de usuários válidos
-2. ❌ Validação de username (números, tamanho, vazio)
-3. ❌ Validação de senha (força, duplicação)
-4. 📋 Listagem de usuários cadastrados
-
-Todos os testes são executados automaticamente ao iniciar a aplicação.
-
-## 🔮 Futuras Implementações
-
-- **DBRepository**: Integração com banco de dados
-- **Interface Web**: Interface gráfica para o sistema
-- **API REST**: Endpoints para integração externa
-- **Autenticação**: Sistema de login e sessões
-- **Logs**: Sistema de auditoria e logs
-
-## 📄 Licença
-
-Este projeto foi desenvolvido para fins educacionais na disciplina de Metodologia de Software.
+Este projeto foi desenvolvido para fins educacionais como parte do curso de Metodologia de Desenvolvimento de Software.
 
 ---
 
-**Nota**: O projeto demonstra boas práticas de desenvolvimento Java, incluindo separação de responsabilidades, validação de dados, tratamento de exceções e flexibilidade arquitetural.
+**Desenvolvido com ❤️ para o projeto Cirurgia Sem Fronteiras**

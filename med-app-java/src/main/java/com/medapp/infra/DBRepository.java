@@ -1,6 +1,7 @@
 package com.medapp.infra;
 
 import com.medapp.models.User;
+import com.medapp.models.Sala;
 import com.medapp.utils.storage.*;
 import com.medapp.utils.repository.*;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 public class DBRepository implements Repository {
     private Map<String, User> simulatedDatabase = new HashMap<>();
+    private Map<String, Sala> simulatedSalaDatabase = new HashMap<>();
     private boolean isConfigured = true;
     private boolean isAvailable = true;
     
@@ -116,6 +118,105 @@ public class DBRepository implements Repository {
     
     public void setAvailable(boolean available) {
         this.isAvailable = available;
+    }
+
+    // Implementação das operações com Sala
+    @Override
+    public void saveSala(Sala sala) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("saveSala", 30);
+            }
+            
+            simulatedSalaDatabase.put(sala.getId(), sala);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to save sala in database: " + sala.getId(), e);
+        }
+    }
+
+    @Override
+    public Sala loadSala(String id) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("loadSala", 30);
+            }
+            
+            Sala sala = simulatedSalaDatabase.get(id);
+            if (sala == null) {
+                throw new RepositoryException("Sala not found in database: " + id);
+            }
+            return sala;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to load sala from database: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Sala> getAllSalas() {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("getAllSalas", 30);
+            }
+            
+            return new ArrayList<>(simulatedSalaDatabase.values());
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all salas from database", e);
+        }
+    }
+
+    @Override
+    public void deleteSala(String id) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("deleteSala", 30);
+            }
+            
+            if (simulatedSalaDatabase.remove(id) == null) {
+                throw new RepositoryException("Sala not found in database: " + id);
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to delete sala from database: " + id, e);
+        }
     }
 }
 

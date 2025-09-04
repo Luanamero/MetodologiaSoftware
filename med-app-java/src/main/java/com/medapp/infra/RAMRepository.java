@@ -1,6 +1,7 @@
 package com.medapp.infra;
 
 import com.medapp.models.User;
+import com.medapp.models.Sala;
 import com.medapp.utils.repository.*;
 import com.medapp.utils.storage.UserAlreadyExistsException;
 import com.medapp.utils.storage.UserNotFoundException;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 
 public class RAMRepository implements Repository {
     private Map<String, User> users = new HashMap<>();
+    private Map<String, Sala> salas = new HashMap<>();
 
     @Override
     public void saveUser(User user) {
@@ -69,6 +71,66 @@ public class RAMRepository implements Repository {
                 throw e;
             }
             throw new RepositoryException("Failed to delete user: " + username, e);
+        }
+    }
+
+    // Implementação das operações com Sala
+    @Override
+    public void saveSala(Sala sala) {
+        try {
+            if (salas.containsKey(sala.getId())) {
+                // Atualiza sala existente
+                salas.put(sala.getId(), sala);
+            } else {
+                // Cria nova sala
+                salas.put(sala.getId(), sala);
+            }
+        } catch (OutOfMemoryError e) {
+            throw new RepositoryException("Not enough memory to save sala: " + sala.getId(), e);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to save sala: " + sala.getId(), e);
+        }
+    }
+
+    @Override
+    public Sala loadSala(String id) {
+        try {
+            Sala sala = salas.get(id);
+            if (sala == null) {
+                throw new RepositoryException("Sala not found: " + id);
+            }
+            return sala;
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to load sala: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Sala> getAllSalas() {
+        try {
+            return new ArrayList<>(salas.values());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all salas", e);
+        }
+    }
+
+    @Override
+    public void deleteSala(String id) {
+        try {
+            if (salas.remove(id) == null) {
+                throw new RepositoryException("Sala not found: " + id);
+            }
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to delete sala: " + id, e);
         }
     }
 }

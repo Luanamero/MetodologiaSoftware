@@ -1,6 +1,7 @@
 package com.medapp.infra;
 
 import com.medapp.models.User;
+import com.medapp.models.Sala;
 import com.medapp.utils.storage.*;
 import com.medapp.utils.repository.*;
 
@@ -9,18 +10,24 @@ import java.util.*;
 
 public class FileRepository implements Repository {
     private static final String USER_FOLDER = "users";
+    private static final String SALA_FOLDER = "salas";
 
     public FileRepository() {
         try {
-            File folder = new File(USER_FOLDER);
-            if (!folder.exists() && !folder.mkdirs()) {
+            File userFolder = new File(USER_FOLDER);
+            if (!userFolder.exists() && !userFolder.mkdirs()) {
                 throw new StoragePermissionException("create directory", USER_FOLDER);
+            }
+            
+            File salaFolder = new File(SALA_FOLDER);
+            if (!salaFolder.exists() && !salaFolder.mkdirs()) {
+                throw new StoragePermissionException("create directory", SALA_FOLDER);
             }
         } catch (Exception e) {
             if (e instanceof StorageException) {
                 throw e;
             }
-            throw new RepositoryConfigurationException("USER_FOLDER", "Failed to initialize user directory: " + e.getMessage());
+            throw new RepositoryConfigurationException("FOLDERS", "Failed to initialize directories: " + e.getMessage());
         }
     }
 
@@ -177,6 +184,104 @@ public class FileRepository implements Repository {
                 throw e;
             }
             throw new RepositoryException("Repository operation failed while updating user: " + user.getUsername(), e);
+        }
+    }
+
+    // Implementação das operações com Sala
+    @Override
+    public void saveSala(Sala sala) {
+        try {
+            File file = new File(SALA_FOLDER, sala.getId() + ".bin");
+            
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+                oos.writeObject(sala);
+            } catch (IOException e) {
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no space left")) {
+                    throw new InsufficientStorageSpaceException("save sala");
+                }
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("permission denied")) {
+                    throw new StoragePermissionException("write", file.getAbsolutePath());
+                }
+                throw new FileStorageException("save", file.getAbsolutePath(), e);
+            }
+        } catch (Exception e) {
+            if (e instanceof StorageException) {
+                throw e;
+            }
+            throw new RepositoryException("Repository operation failed while saving sala: " + sala.getId(), e);
+        }
+    }
+
+    @Override
+    public Sala loadSala(String id) {
+        try {
+            File file = new File(SALA_FOLDER, id + ".bin");
+            
+            if (!file.exists()) {
+                throw new RepositoryException("Sala not found: " + id);
+            }
+            
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                return (Sala) ois.readObject();
+            } catch (IOException e) {
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("corrupted")) {
+                    throw new StorageCorruptedException(file.getAbsolutePath());
+                }
+                throw new FileStorageException("load", file.getAbsolutePath(), e);
+            } catch (ClassNotFoundException e) {
+                throw new StorageCorruptedException(file.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            if (e instanceof StorageException || e instanceof RepositoryException) {
+                throw e;
+            }
+            throw new RepositoryException("Repository operation failed while loading sala: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Sala> getAllSalas() {
+        try {
+            File folder = new File(SALA_FOLDER);
+            List<Sala> salas = new ArrayList<>();
+            
+            File[] files = folder.listFiles((dir, name) -> name.endsWith(".bin"));
+            if (files != null) {
+                for (File file : files) {
+                    try {
+                        String id = file.getName().replace(".bin", "");
+                        Sala sala = loadSala(id);
+                        salas.add(sala);
+                    } catch (Exception e) {
+                        // Log error but continue with other files
+                        System.err.println("Warning: Failed to load sala from " + file.getName() + ": " + e.getMessage());
+                    }
+                }
+            }
+            
+            return salas;
+        } catch (Exception e) {
+            throw new RepositoryException("Repository operation failed while getting all salas", e);
+        }
+    }
+
+    @Override
+    public void deleteSala(String id) {
+        try {
+            File file = new File(SALA_FOLDER, id + ".bin");
+            
+            if (!file.exists()) {
+                throw new RepositoryException("Sala not found: " + id);
+            }
+            
+            if (!file.delete()) {
+                throw new StoragePermissionException("delete", file.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            if (e instanceof StorageException || e instanceof RepositoryException) {
+                throw e;
+            }
+            throw new RepositoryException("Repository operation failed while deleting sala: " + id, e);
         }
     }
 }
