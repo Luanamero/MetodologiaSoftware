@@ -2,97 +2,94 @@ package com.medapp.infra;
 
 import com.medapp.models.User;
 import com.medapp.models.Sala;
-import com.medapp.utils.storage.*;
+import com.medapp.models.Relatorio;
 import com.medapp.utils.repository.*;
+import com.medapp.utils.storage.*;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * FileRepository - Implementação de Repository para armazenamento em arquivos
+ * 
+ * Armazena dados em arquivos binários no diretório "users/"
+ * Cada entidade é persistida em arquivos separados usando serialização Java
+ */
 public class FileRepository implements Repository {
-    private static final String USER_FOLDER = "users";
-    private static final String SALA_FOLDER = "salas";
-
+    
+    private static final String USERS_DIR = "users";
+    private static final String SALAS_DIR = "salas";
+    private static final String RELATORIOS_DIR = "relatorios";
+    
     public FileRepository() {
         try {
-            File userFolder = new File(USER_FOLDER);
-            if (!userFolder.exists() && !userFolder.mkdirs()) {
-                throw new StoragePermissionException("create directory", USER_FOLDER);
-            }
-            
-            File salaFolder = new File(SALA_FOLDER);
-            if (!salaFolder.exists() && !salaFolder.mkdirs()) {
-                throw new StoragePermissionException("create directory", SALA_FOLDER);
-            }
-        } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryConfigurationException("FOLDERS", "Failed to initialize directories: " + e.getMessage());
+            // Criar diretórios se não existem
+            Files.createDirectories(Paths.get(USERS_DIR));
+            Files.createDirectories(Paths.get(SALAS_DIR));
+            Files.createDirectories(Paths.get(RELATORIOS_DIR));
+        } catch (IOException e) {
+            throw new RepositoryConfigurationException("directory.creation", 
+                "Failed to create storage directories: " + e.getMessage());
         }
     }
 
+    // ============= MÉTODOS PARA USER =============
+    
     @Override
     public void saveUser(User user) {
         try {
-            File file = new File(USER_FOLDER, user.getUsername() + ".bin");
-
-            if (file.exists()) {
+            String filename = USERS_DIR + File.separator + user.getUsername() + ".bin";
+            
+            // Verificar se usuário já existe
+            if (Files.exists(Paths.get(filename))) {
                 throw new UserAlreadyExistsException(user.getUsername());
             }
-
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
                 oos.writeObject(user);
-                System.out.println("Saved user to file: " + file.getName());
-
-            } catch (FileNotFoundException e) {
-                throw new StoragePermissionException("write file", file.getAbsolutePath());
-
-            } catch (EOFException e) {
-                throw new StorageCorruptedException(file.getName(), e);
-
-            } catch (IOException e) {
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no space left")) {
-                    throw new InsufficientStorageSpaceException("save user");
-                }
-                throw new FileStorageException("write", file.getAbsolutePath(), e);
+                System.out.println("User saved to file: " + filename);
             }
+            
+        } catch (UserAlreadyExistsException e) {
+            throw e;
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new RepositoryConfigurationException("storage.directory", 
+                    "Storage directory not accessible: " + USERS_DIR);
+            }
+            throw new RepositoryException("Failed to save user: " + user.getUsername(), e);
         } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while saving user: " + user.getUsername(), e);
+            throw new RepositoryException("Unexpected error saving user: " + user.getUsername(), e);
         }
     }
 
     @Override
     public User loadUser(String username) {
         try {
-            File file = new File(USER_FOLDER, username + ".bin");
-
-            if (!file.exists()) {
+            String filename = USERS_DIR + File.separator + username + ".bin";
+            
+            if (!Files.exists(Paths.get(filename))) {
                 throw new UserNotFoundException(username);
             }
-
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
                 return (User) ois.readObject();
-
-            } catch (FileNotFoundException e) {
-                throw new StoragePermissionException("read file", file.getAbsolutePath());
-
-            } catch (EOFException e) {
-                throw new StorageCorruptedException(file.getName(), e);
-
-            } catch (ClassNotFoundException e) {
-                throw new StorageCorruptedException("Class not found during deserialization of user: " + username, e);
-
-            } catch (IOException e) {
-                throw new FileStorageException("read", file.getAbsolutePath(), e);
             }
+            
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new UserNotFoundException(username);
+            }
+            throw new RepositoryException("Failed to load user: " + username, e);
+        } catch (ClassNotFoundException e) {
+            throw new RepositoryIntegrityException("user.data", 
+                "User data corrupted for: " + username);
         } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while loading user: " + username, e);
+            throw new RepositoryException("Unexpected error loading user: " + username, e);
         }
     }
 
@@ -100,152 +97,113 @@ public class FileRepository implements Repository {
     public List<User> getAllUsers() {
         try {
             List<User> users = new ArrayList<>();
-            File folder = new File(USER_FOLDER);
-
-            if (!folder.exists()) {
-                throw new StoragePermissionException("access directory", folder.getAbsolutePath());
+            File usersDir = new File(USERS_DIR);
+            
+            if (!usersDir.exists()) {
+                return users;
             }
-
-            File[] files = folder.listFiles((dir, name) -> name.endsWith(".bin"));
-
-            if (files == null) {
-                throw new StoragePermissionException("list files", folder.getAbsolutePath());
-            }
-
-            for (File file : files) {
-                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                    users.add((User) ois.readObject());
-                } catch (EOFException e) {
-                    System.out.println("Warning: Skipping corrupted file (EOF): " + file.getName() + " -> " + e.getMessage());
-                } catch (ClassNotFoundException e) {
-                    System.out.println("Warning: Class not found while reading: " + file.getName() + " -> " + e.getMessage());
-                } catch (IOException e) {
-                    System.out.println("Warning: I/O error while reading file: " + file.getName() + " -> " + e.getMessage());
+            
+            File[] files = usersDir.listFiles((dir, name) -> name.endsWith(".bin"));
+            if (files != null) {
+                for (File file : files) {
+                    try {
+                        String username = file.getName().replace(".bin", "");
+                        User user = loadUser(username);
+                        users.add(user);
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not load user from file " + file.getName() + ": " + e.getMessage());
+                    }
                 }
             }
-
+            
             return users;
+            
         } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while loading all users", e);
+            throw new RepositoryException("Failed to get all users", e);
         }
     }
 
     @Override
     public void deleteUser(String username) {
         try {
-            File file = new File(USER_FOLDER, username + ".bin");
-
-            if (!file.exists()) {
+            String filename = USERS_DIR + File.separator + username + ".bin";
+            Path path = Paths.get(filename);
+            
+            if (!Files.exists(path)) {
                 throw new UserNotFoundException(username);
             }
-
-            if (!file.delete()) {
-                throw new StoragePermissionException("delete file", file.getAbsolutePath());
-            }
-
-            System.out.println("Deleted user file for: " + username);
+            
+            Files.delete(path);
+            
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to delete user: " + username, e);
         } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while deleting user: " + username, e);
+            throw new RepositoryException("Unexpected error deleting user: " + username, e);
         }
     }
 
-    public void updateUser(User user) {
-        try {
-            File file = new File(USER_FOLDER, user.getUsername() + ".bin");
-
-            if (!file.exists()) {
-                throw new UserNotFoundException(user.getUsername());
-            }
-
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-                oos.writeObject(user);
-                System.out.println("Updated user file: " + file.getName());
-
-            } catch (FileNotFoundException e) {
-                throw new StoragePermissionException("write file", file.getAbsolutePath());
-
-            } catch (EOFException e) {
-                throw new StorageCorruptedException(file.getName(), e);
-
-            } catch (IOException e) {
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no space left")) {
-                    throw new InsufficientStorageSpaceException("update user");
-                }
-                throw new FileStorageException("update", file.getAbsolutePath(), e);
-            }
-        } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while updating user: " + user.getUsername(), e);
-        }
-    }
-
-    // Implementação das operações com Sala
+    // ============= MÉTODOS PARA SALA =============
+    
     @Override
     public void saveSala(Sala sala) {
         try {
-            File file = new File(SALA_FOLDER, sala.getId() + ".bin");
+            String filename = SALAS_DIR + File.separator + sala.getId() + ".bin";
             
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
                 oos.writeObject(sala);
-            } catch (IOException e) {
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no space left")) {
-                    throw new InsufficientStorageSpaceException("save sala");
-                }
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("permission denied")) {
-                    throw new StoragePermissionException("write", file.getAbsolutePath());
-                }
-                throw new FileStorageException("save", file.getAbsolutePath(), e);
+                System.out.println("Sala saved to file: " + filename);
             }
+            
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new RepositoryConfigurationException("storage.directory", 
+                    "Storage directory not accessible: " + SALAS_DIR);
+            }
+            throw new RepositoryException("Failed to save sala: " + sala.getId(), e);
         } catch (Exception e) {
-            if (e instanceof StorageException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while saving sala: " + sala.getId(), e);
+            throw new RepositoryException("Unexpected error saving sala: " + sala.getId(), e);
         }
     }
 
     @Override
     public Sala loadSala(String id) {
         try {
-            File file = new File(SALA_FOLDER, id + ".bin");
+            String filename = SALAS_DIR + File.separator + id + ".bin";
             
-            if (!file.exists()) {
+            if (!Files.exists(Paths.get(filename))) {
                 throw new RepositoryException("Sala not found: " + id);
             }
             
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
                 return (Sala) ois.readObject();
-            } catch (IOException e) {
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("corrupted")) {
-                    throw new StorageCorruptedException(file.getAbsolutePath());
-                }
-                throw new FileStorageException("load", file.getAbsolutePath(), e);
-            } catch (ClassNotFoundException e) {
-                throw new StorageCorruptedException(file.getAbsolutePath());
             }
+            
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new RepositoryException("Sala not found: " + id);
+            }
+            throw new RepositoryException("Failed to load sala: " + id, e);
+        } catch (ClassNotFoundException e) {
+            throw new RepositoryIntegrityException("sala.data", 
+                "Sala data corrupted for: " + id);
         } catch (Exception e) {
-            if (e instanceof StorageException || e instanceof RepositoryException) {
-                throw e;
-            }
-            throw new RepositoryException("Repository operation failed while loading sala: " + id, e);
+            throw new RepositoryException("Unexpected error loading sala: " + id, e);
         }
     }
 
     @Override
     public List<Sala> getAllSalas() {
         try {
-            File folder = new File(SALA_FOLDER);
             List<Sala> salas = new ArrayList<>();
+            File salasDir = new File(SALAS_DIR);
             
-            File[] files = folder.listFiles((dir, name) -> name.endsWith(".bin"));
+            if (!salasDir.exists()) {
+                return salas;
+            }
+            
+            File[] files = salasDir.listFiles((dir, name) -> name.endsWith(".bin"));
             if (files != null) {
                 for (File file : files) {
                     try {
@@ -253,35 +211,143 @@ public class FileRepository implements Repository {
                         Sala sala = loadSala(id);
                         salas.add(sala);
                     } catch (Exception e) {
-                        // Log error but continue with other files
-                        System.err.println("Warning: Failed to load sala from " + file.getName() + ": " + e.getMessage());
+                        System.err.println("Warning: Could not load sala from file " + file.getName() + ": " + e.getMessage());
                     }
                 }
             }
             
             return salas;
+            
         } catch (Exception e) {
-            throw new RepositoryException("Repository operation failed while getting all salas", e);
+            throw new RepositoryException("Failed to get all salas", e);
         }
     }
 
     @Override
     public void deleteSala(String id) {
         try {
-            File file = new File(SALA_FOLDER, id + ".bin");
+            String filename = SALAS_DIR + File.separator + id + ".bin";
+            Path path = Paths.get(filename);
             
-            if (!file.exists()) {
+            if (!Files.exists(path)) {
                 throw new RepositoryException("Sala not found: " + id);
             }
             
-            if (!file.delete()) {
-                throw new StoragePermissionException("delete", file.getAbsolutePath());
-            }
+            Files.delete(path);
+            
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to delete sala: " + id, e);
         } catch (Exception e) {
-            if (e instanceof StorageException || e instanceof RepositoryException) {
-                throw e;
+            throw new RepositoryException("Unexpected error deleting sala: " + id, e);
+        }
+    }
+
+    // ============= MÉTODOS PARA RELATORIO =============
+    
+    @Override
+    public void saveRelatorio(Relatorio relatorio) {
+        try {
+            String filename = RELATORIOS_DIR + File.separator + relatorio.getId() + ".bin";
+            
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+                oos.writeObject(relatorio);
+                System.out.println("Relatorio saved to file: " + filename);
             }
-            throw new RepositoryException("Repository operation failed while deleting sala: " + id, e);
+            
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new RepositoryConfigurationException("storage.directory", 
+                    "Storage directory not accessible: " + RELATORIOS_DIR);
+            }
+            throw new RepositoryException("Failed to save relatorio: " + relatorio.getId(), e);
+        } catch (Exception e) {
+            throw new RepositoryException("Unexpected error saving relatorio: " + relatorio.getId(), e);
+        }
+    }
+
+    @Override
+    public Relatorio loadRelatorio(String id) {
+        try {
+            String filename = RELATORIOS_DIR + File.separator + id + ".bin";
+            
+            if (!Files.exists(Paths.get(filename))) {
+                throw new RepositoryException("Relatorio not found: " + id);
+            }
+            
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+                return (Relatorio) ois.readObject();
+            }
+            
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException) {
+                throw new RepositoryException("Relatorio not found: " + id);
+            }
+            throw new RepositoryException("Failed to load relatorio: " + id, e);
+        } catch (ClassNotFoundException e) {
+            throw new RepositoryIntegrityException("relatorio.data", 
+                "Relatorio data corrupted for: " + id);
+        } catch (Exception e) {
+            throw new RepositoryException("Unexpected error loading relatorio: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getAllRelatorios() {
+        try {
+            List<Relatorio> relatorios = new ArrayList<>();
+            File relatoriosDir = new File(RELATORIOS_DIR);
+            
+            if (!relatoriosDir.exists()) {
+                return relatorios;
+            }
+            
+            File[] files = relatoriosDir.listFiles((dir, name) -> name.endsWith(".bin"));
+            if (files != null) {
+                for (File file : files) {
+                    try {
+                        String id = file.getName().replace(".bin", "");
+                        Relatorio relatorio = loadRelatorio(id);
+                        relatorios.add(relatorio);
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not load relatorio from file " + file.getName() + ": " + e.getMessage());
+                    }
+                }
+            }
+            
+            return relatorios;
+            
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all relatorios", e);
+        }
+    }
+
+    @Override
+    public void deleteRelatorio(String id) {
+        try {
+            String filename = RELATORIOS_DIR + File.separator + id + ".bin";
+            Path path = Paths.get(filename);
+            
+            if (!Files.exists(path)) {
+                throw new RepositoryException("Relatorio not found: " + id);
+            }
+            
+            Files.delete(path);
+            
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to delete relatorio: " + id, e);
+        } catch (Exception e) {
+            throw new RepositoryException("Unexpected error deleting relatorio: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getRelatoriosByAutor(String autorUsername) {
+        try {
+            return getAllRelatorios().stream()
+                    .filter(relatorio -> autorUsername.equals(relatorio.getAutorUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get relatorios by autor: " + autorUsername, e);
         }
     }
 }

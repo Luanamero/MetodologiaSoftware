@@ -2,25 +2,25 @@ package com.medapp.infra;
 
 import com.medapp.models.User;
 import com.medapp.models.Sala;
+import com.medapp.models.Relatorio;
 import com.medapp.utils.repository.*;
-import com.medapp.utils.storage.UserAlreadyExistsException;
 import com.medapp.utils.storage.UserNotFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class RAMRepository implements Repository {
     private Map<String, User> users = new HashMap<>();
     private Map<String, Sala> salas = new HashMap<>();
+    private Map<String, Relatorio> relatorios = new HashMap<>();
 
     @Override
     public void saveUser(User user) {
         try {
-            if (users.containsKey(user.getUsername())) {
-                throw new UserAlreadyExistsException(user.getUsername());
-            }
+            // Permitir tanto criação quanto atualização de usuários
             users.put(user.getUsername(), user);
         } catch (OutOfMemoryError e) {
             throw new RepositoryException("Not enough memory to save user: " + user.getUsername(), e);
@@ -131,6 +131,74 @@ public class RAMRepository implements Repository {
                 throw e;
             }
             throw new RepositoryException("Failed to delete sala: " + id, e);
+        }
+    }
+
+    // Implementação das operações com Relatorio
+    @Override
+    public void saveRelatorio(Relatorio relatorio) {
+        try {
+            if (relatorio == null || relatorio.getId() == null) {
+                throw new IllegalArgumentException("Relatório ou ID não pode ser nulo");
+            }
+            relatorios.put(relatorio.getId(), relatorio);
+        } catch (OutOfMemoryError e) {
+            throw new RepositoryException("Not enough memory to save relatorio: " + relatorio.getId(), e);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to save relatorio: " + relatorio.getId(), e);
+        }
+    }
+
+    @Override
+    public Relatorio loadRelatorio(String id) {
+        try {
+            Relatorio relatorio = relatorios.get(id);
+            if (relatorio == null) {
+                throw new RepositoryException("Relatorio not found: " + id);
+            }
+            return relatorio;
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to load relatorio: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getAllRelatorios() {
+        try {
+            return new ArrayList<>(relatorios.values());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all relatorios", e);
+        }
+    }
+
+    @Override
+    public void deleteRelatorio(String id) {
+        try {
+            if (relatorios.remove(id) == null) {
+                throw new RepositoryException("Relatorio not found: " + id);
+            }
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to delete relatorio: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getRelatoriosByAutor(String autorUsername) {
+        try {
+            return relatorios.values().stream()
+                    .filter(relatorio -> autorUsername.equals(relatorio.getAutorUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get relatorios by autor: " + autorUsername, e);
         }
     }
 }

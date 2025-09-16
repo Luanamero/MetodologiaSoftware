@@ -2,16 +2,19 @@ package com.medapp.infra;
 
 import com.medapp.models.User;
 import com.medapp.models.Sala;
+import com.medapp.models.Relatorio;
 import com.medapp.utils.storage.*;
 import com.medapp.utils.repository.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DBRepository implements Repository {
     private Map<String, User> simulatedDatabase = new HashMap<>();
     private Map<String, Sala> simulatedSalaDatabase = new HashMap<>();
+    private Map<String, Relatorio> simulatedRelatorioDatabase = new HashMap<>();
     private boolean isConfigured = true;
     private boolean isAvailable = true;
     
@@ -216,6 +219,136 @@ public class DBRepository implements Repository {
             throw e;
         } catch (Exception e) {
             throw new RepositoryException("Failed to delete sala from database: " + id, e);
+        }
+    }
+
+    // Implementação das operações com Relatorio
+    @Override
+    public void saveRelatorio(Relatorio relatorio) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("saveRelatorio", 30);
+            }
+            
+            simulatedRelatorioDatabase.put(relatorio.getId(), relatorio);
+            System.out.println("Simulating save to database for relatorio: " + relatorio.getTitulo());
+            
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to save relatorio to database: " + relatorio.getId(), e);
+        }
+    }
+
+    @Override
+    public Relatorio loadRelatorio(String id) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("loadRelatorio", 30);
+            }
+            
+            Relatorio relatorio = simulatedRelatorioDatabase.get(id);
+            if (relatorio == null) {
+                throw new RepositoryException("Relatorio not found in database: " + id);
+            }
+            
+            return relatorio;
+            
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to load relatorio from database: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getAllRelatorios() {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.03) {
+                throw new RepositoryTimeoutException("getAllRelatorios", 30);
+            }
+            
+            return new ArrayList<>(simulatedRelatorioDatabase.values());
+            
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all relatorios from database", e);
+        }
+    }
+
+    @Override
+    public void deleteRelatorio(String id) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.05) {
+                throw new RepositoryTimeoutException("deleteRelatorio", 30);
+            }
+            
+            if (simulatedRelatorioDatabase.remove(id) == null) {
+                throw new RepositoryException("Relatorio not found in database: " + id);
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to delete relatorio from database: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Relatorio> getRelatoriosByAutor(String autorUsername) {
+        try {
+            if (!isConfigured) {
+                throw new RepositoryConfigurationException("database.url", "Database URL not configured");
+            }
+            
+            if (!isAvailable) {
+                throw new RepositoryUnavailableException("database", "Database maintenance in progress");
+            }
+            
+            if (Math.random() < 0.03) {
+                throw new RepositoryTimeoutException("getRelatoriosByAutor", 30);
+            }
+            
+            return simulatedRelatorioDatabase.values().stream()
+                    .filter(relatorio -> autorUsername.equals(relatorio.getAutorUsername()))
+                    .collect(Collectors.toList());
+                    
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get relatorios by autor from database: " + autorUsername, e);
         }
     }
 }
