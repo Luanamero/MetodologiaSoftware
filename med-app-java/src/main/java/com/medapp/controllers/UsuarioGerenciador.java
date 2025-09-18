@@ -6,8 +6,6 @@ import com.medapp.models.Paciente;
 import com.medapp.models.ProfissionalSaude;
 import com.medapp.use.UsuarioValidador;
 import com.medapp.infra.Repository;
-import com.medapp.utils.storage.*;
-import com.medapp.utils.repository.*;
 import com.medapp.utils.user.*;
 import com.medapp.utils.password.*;
 
@@ -135,6 +133,9 @@ public class UsuarioGerenciador {
     private void validarECriarUsuario(UserCreator creator) throws Exception {
         User usuario = creator.create();
         userRepository.saveUser(usuario);
+        
+        // Remove usuário existente da lista local se houver, antes de adicionar o novo
+        usuarios.removeIf(u -> u.getUsername().equals(usuario.getUsername()));
         usuarios.add(usuario);
     }
 

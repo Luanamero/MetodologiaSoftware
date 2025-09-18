@@ -43,4 +43,23 @@ public abstract class User implements Serializable {
     }
 
     public abstract String getTipoUsuario();
+    
+    @Override
+    public String toString() {
+        return String.format("User{username='%s', email='%s', tipo='%s'}", 
+                            username, email, getTipoUsuario());
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User user = (User) obj;
+        return username != null ? username.equals(user.username) : user.username == null;
+    }
+    
+    @Override
+    public int hashCode() {
+        return username != null ? username.hashCode() : 0;
+    }
 }

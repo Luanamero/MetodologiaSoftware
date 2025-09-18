@@ -12,10 +12,12 @@ public class FacadeSingleton {
     private static volatile String repositoryType;
     private final UsuarioGerenciador usuarioGerenciador;
     private final SalaGerenciador salaGerenciador;
+    private final RelatorioGerenciador relatorioGerenciador;
 
     private FacadeSingleton(Repository repository) {
         this.usuarioGerenciador = new UsuarioGerenciador(repository);
         this.salaGerenciador = new SalaGerenciador(repository);
+        this.relatorioGerenciador = new RelatorioGerenciador(repository);
     }
 
     public static FacadeSingleton getInstance(Repository repository) {
@@ -145,6 +147,11 @@ public class FacadeSingleton {
         sb.append("\n");
         sb.append(salaGerenciador.listarSalasFormatado());
         return sb.toString();
+    }
+
+    // Delegação para RelatorioGerenciador
+    public RelatorioGerenciador getRelatorioGerenciador() {
+        return relatorioGerenciador;
     }
 
     private String formatarInformacoesUsuario(User usuario) {
