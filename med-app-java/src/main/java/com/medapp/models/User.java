@@ -2,11 +2,16 @@ package com.medapp.models;
 
 import java.io.Serializable;
 
+import com.medapp.stateUser.UserCareTake;
+import com.medapp.stateUser.UserMemento;
+
 public abstract class User implements Serializable {
     private static final long serialVersionUID = 1L;
     protected String username;
     protected String password;
     protected String email;
+    protected UserMemento userMemento;
+    UserCareTake userCareTake;
 
     public User() {
         // Construtor padrão necessário para Jackson
@@ -16,6 +21,7 @@ public abstract class User implements Serializable {
         this.username = username;
         this.password = password;
         this.email = email;
+        userCareTake = new UserCareTake();
     }
 
     public String getUsername() {
@@ -62,4 +68,22 @@ public abstract class User implements Serializable {
     public int hashCode() {
         return username != null ? username.hashCode() : 0;
     }
+
+    public void saveToMemento() {
+        userCareTake.addMemento(new UserMemento(this));
+    }
+
+    public void restoreLastState() {
+    UserMemento memento = userCareTake.getLastMemento();
+    if (memento != null) {
+        restoreFromMemento(memento);
+    }
+}
+
+     public void restoreFromMemento(UserMemento memento) {
+        this.username = memento.getUsername();
+        this.password = memento.getPassword();
+        this.email = memento.getEmail();
+    }
+
 }
