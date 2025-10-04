@@ -295,6 +295,12 @@ public class UsuarioInterfaceGrafica extends JFrame {
                     JOptionPane.showMessageDialog(this, "CRM é obrigatório para Profissional de Saúde.", "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+                try {
+                    com.medapp.use.UsuarioValidador.validarCRM(crm);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 ((ProfissionalSaude) usuarioSelecionadoEdicao).setCrm(crm);
                 ((ProfissionalSaude) usuarioSelecionadoEdicao).setEspecialidade(especialidade);
                 ((ProfissionalSaude) usuarioSelecionadoEdicao).setDepartamento(departamento);
@@ -305,6 +311,12 @@ public class UsuarioInterfaceGrafica extends JFrame {
                 String endereco = campoEndereco.getText().trim();
                 if (cpf.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "CPF é obrigatório para Paciente.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                try {
+                    com.medapp.use.UsuarioValidador.validarCPF(cpf);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 ((Paciente) usuarioSelecionadoEdicao).setCpf(cpf);
@@ -318,6 +330,12 @@ public class UsuarioInterfaceGrafica extends JFrame {
                     }
                 }
                 ((Paciente) usuarioSelecionadoEdicao).setDataNascimento(dataNascimento);
+                try {
+                    com.medapp.use.UsuarioValidador.validarTelefoneCelular(telefone);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 ((Paciente) usuarioSelecionadoEdicao).setTelefone(telefone);
                 ((Paciente) usuarioSelecionadoEdicao).setEndereco(endereco);
             }
@@ -355,7 +373,29 @@ public class UsuarioInterfaceGrafica extends JFrame {
                     String dataNascStr = campoDataNascimento.getText().trim();
                     String telefone = campoTelefone.getText().trim();
                     String endereco = campoEndereco.getText().trim();
-                    LocalDate dataNascimento = LocalDate.parse(dataNascStr);
+                    if (cpf.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "CPF é obrigatório.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    try {
+                        com.medapp.use.UsuarioValidador.validarCPF(cpf);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    LocalDate dataNascimento = null;
+                    try {
+                        dataNascimento = LocalDate.parse(dataNascStr);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Data de nascimento inválida. Use o formato YYYY-MM-DD.", "Erro", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    try {
+                        com.medapp.use.UsuarioValidador.validarTelefoneCelular(telefone);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                     resultado = facade.criarPaciente(username, password, email, cpf, dataNascimento, telefone, endereco);
                     break;
             }
