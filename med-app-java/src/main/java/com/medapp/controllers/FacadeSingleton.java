@@ -2,10 +2,12 @@ package com.medapp.controllers;
 
 import com.medapp.models.User;
 import com.medapp.models.Sala;
+import com.medapp.models.Agendamento;
 import com.medapp.infra.Repository;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public class FacadeSingleton {
     private static volatile FacadeSingleton instance;
@@ -13,11 +15,13 @@ public class FacadeSingleton {
     private final UsuarioGerenciador usuarioGerenciador;
     private final SalaGerenciador salaGerenciador;
     private final RelatorioGerenciador relatorioGerenciador;
+    private final AgendamentoGerenciador agendamentoGerenciador;
 
     private FacadeSingleton(Repository repository) {
         this.usuarioGerenciador = new UsuarioGerenciador(repository);
         this.salaGerenciador = new SalaGerenciador(repository);
         this.relatorioGerenciador = new RelatorioGerenciador(repository);
+        this.agendamentoGerenciador = AgendamentoGerenciador.getInstance(repository);
     }
 
     public static FacadeSingleton getInstance(Repository repository) {
@@ -55,6 +59,7 @@ public class FacadeSingleton {
     public static synchronized void reset() {
         instance = null;
         repositoryType = null;
+        AgendamentoGerenciador.reset();
     }
     
     /**
@@ -146,12 +151,57 @@ public class FacadeSingleton {
         sb.append(usuarioGerenciador.listarUsuariosFormatado());
         sb.append("\n");
         sb.append(salaGerenciador.listarSalasFormatado());
+        sb.append("\n");
+        sb.append(agendamentoGerenciador.listarAgendamentosFormatado());
         return sb.toString();
     }
 
     // Delegação para RelatorioGerenciador
     public RelatorioGerenciador getRelatorioGerenciador() {
         return relatorioGerenciador;
+    }
+
+    // Delegação para AgendamentoGerenciador
+    public String criarAgendamento(String pacienteUsername, String profissionalUsername, 
+                                 String salaId, LocalDateTime dataHora, String tipoConsulta, String observacoes) {
+        return agendamentoGerenciador.criarAgendamento(pacienteUsername, profissionalUsername, 
+                                                     salaId, dataHora, tipoConsulta, observacoes);
+    }
+
+    public Optional<Agendamento> buscarAgendamento(String id) {
+        return agendamentoGerenciador.buscarAgendamento(id);
+    }
+
+    public List<Agendamento> listarAgendamentosPorPaciente(String pacienteUsername) {
+        return agendamentoGerenciador.listarAgendamentosPorPaciente(pacienteUsername);
+    }
+
+    public List<Agendamento> listarAgendamentosPorProfissional(String profissionalUsername) {
+        return agendamentoGerenciador.listarAgendamentosPorProfissional(profissionalUsername);
+    }
+
+    public List<Agendamento> listarAgendamentosAtivos() {
+        return agendamentoGerenciador.listarAgendamentosAtivos();
+    }
+
+    public String listarAgendamentosFormatado() {
+        return agendamentoGerenciador.listarAgendamentosFormatado();
+    }
+
+    public String confirmarAgendamento(String id) {
+        return agendamentoGerenciador.confirmarAgendamento(id);
+    }
+
+    public String cancelarAgendamento(String id) {
+        return agendamentoGerenciador.cancelarAgendamento(id);
+    }
+
+    public String finalizarAgendamento(String id) {
+        return agendamentoGerenciador.finalizarAgendamento(id);
+    }
+
+    public AgendamentoGerenciador getAgendamentoGerenciador() {
+        return agendamentoGerenciador;
     }
 
     private String formatarInformacoesUsuario(User usuario) {

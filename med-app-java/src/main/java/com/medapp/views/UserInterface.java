@@ -2,8 +2,11 @@ package com.medapp.views;
 
 import com.medapp.controllers.FacadeSingleton;
 import com.medapp.models.User;
+import com.medapp.models.Agendamento;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 public class UserInterface {
     private FacadeSingleton facade;
@@ -60,5 +63,43 @@ public class UserInterface {
 
     public User buscarUsuario(String username) {
         return facade.buscarUsuario(username);
+    }
+
+    // Métodos de Agendamento
+    public String criarAgendamento(String pacienteUsername, String profissionalUsername, 
+                                 String salaId, LocalDateTime dataHora, String tipoConsulta, String observacoes) {
+        return facade.criarAgendamento(pacienteUsername, profissionalUsername, salaId, dataHora, tipoConsulta, observacoes);
+    }
+
+    public Optional<Agendamento> buscarAgendamento(String id) {
+        return facade.buscarAgendamento(id);
+    }
+
+    public List<Agendamento> listarAgendamentosPorPaciente(String pacienteUsername) {
+        return facade.listarAgendamentosPorPaciente(pacienteUsername);
+    }
+
+    public List<Agendamento> listarAgendamentosPorProfissional(String profissionalUsername) {
+        return facade.listarAgendamentosPorProfissional(profissionalUsername);
+    }
+
+    public List<Agendamento> listarAgendamentosAtivos() {
+        return facade.listarAgendamentosAtivos();
+    }
+
+    public String mostrarAgendamentos() {
+        return facade.listarAgendamentosFormatado();
+    }
+
+    public String confirmarAgendamento(String id) {
+        return facade.confirmarAgendamento(id);
+    }
+
+    public String cancelarAgendamento(String id) {
+        return facade.cancelarAgendamento(id);
+    }
+
+    public String finalizarAgendamento(String id) {
+        return facade.finalizarAgendamento(id);
     }
 }

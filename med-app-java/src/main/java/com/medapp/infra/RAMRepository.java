@@ -3,6 +3,7 @@ package com.medapp.infra;
 import com.medapp.models.User;
 import com.medapp.models.Sala;
 import com.medapp.models.Relatorio;
+import com.medapp.models.Agendamento;
 import com.medapp.utils.repository.*;
 import com.medapp.utils.storage.UserNotFoundException;
 
@@ -16,6 +17,7 @@ public class RAMRepository implements Repository {
     private Map<String, User> users = new HashMap<>();
     private Map<String, Sala> salas = new HashMap<>();
     private Map<String, Relatorio> relatorios = new HashMap<>();
+    private Map<String, Agendamento> agendamentos = new HashMap<>();
 
     @Override
     public void saveUser(User user) {
@@ -199,6 +201,93 @@ public class RAMRepository implements Repository {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RepositoryException("Failed to get relatorios by autor: " + autorUsername, e);
+        }
+    }
+
+    // Implementação dos métodos de Agendamento
+    @Override
+    public void saveAgendamento(Agendamento agendamento) {
+        try {
+            agendamentos.put(agendamento.getId(), agendamento);
+        } catch (OutOfMemoryError e) {
+            throw new RepositoryException("Not enough memory to save agendamento: " + agendamento.getId(), e);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to save agendamento: " + agendamento.getId(), e);
+        }
+    }
+
+    @Override
+    public Agendamento loadAgendamento(String id) {
+        try {
+            Agendamento agendamento = agendamentos.get(id);
+            if (agendamento == null) {
+                throw new RepositoryException("Agendamento not found: " + id);
+            }
+            return agendamento;
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to load agendamento: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAllAgendamentos() {
+        try {
+            return new ArrayList<>(agendamentos.values());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get all agendamentos", e);
+        }
+    }
+
+    @Override
+    public void deleteAgendamento(String id) {
+        try {
+            if (agendamentos.remove(id) == null) {
+                throw new RepositoryException("Agendamento not found: " + id);
+            }
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw e;
+            }
+            throw new RepositoryException("Failed to delete agendamento: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosByPaciente(String pacienteUsername) {
+        try {
+            return agendamentos.values().stream()
+                    .filter(agendamento -> pacienteUsername.equals(agendamento.getPacienteUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by paciente: " + pacienteUsername, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosByProfissional(String profissionalUsername) {
+        try {
+            return agendamentos.values().stream()
+                    .filter(agendamento -> profissionalUsername.equals(agendamento.getProfissionalUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by profissional: " + profissionalUsername, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosBySala(String salaId) {
+        try {
+            return agendamentos.values().stream()
+                    .filter(agendamento -> salaId.equals(agendamento.getSalaId()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by sala: " + salaId, e);
         }
     }
 }

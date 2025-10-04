@@ -3,6 +3,7 @@ package com.medapp.infra;
 import com.medapp.models.User;
 import com.medapp.models.Sala;
 import com.medapp.models.Relatorio;
+import com.medapp.models.Agendamento;
 import com.medapp.utils.repository.*;
 import com.medapp.utils.storage.*;
 
@@ -22,6 +23,7 @@ public class FileRepository implements Repository {
     private static final String USERS_DIR = "users";
     private static final String SALAS_DIR = "salas";
     private static final String RELATORIOS_DIR = "relatorios";
+    private static final String AGENDAMENTOS_DIR = "agendamentos";
     
     public FileRepository() {
         try {
@@ -29,6 +31,7 @@ public class FileRepository implements Repository {
             Files.createDirectories(Paths.get(USERS_DIR));
             Files.createDirectories(Paths.get(SALAS_DIR));
             Files.createDirectories(Paths.get(RELATORIOS_DIR));
+            Files.createDirectories(Paths.get(AGENDAMENTOS_DIR));
         } catch (IOException e) {
             throw new RepositoryConfigurationException("directory.creation", 
                 "Failed to create storage directories: " + e.getMessage());
@@ -348,6 +351,117 @@ public class FileRepository implements Repository {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RepositoryException("Failed to get relatorios by autor: " + autorUsername, e);
+        }
+    }
+
+    // ============= MÉTODOS PARA AGENDAMENTO =============
+
+    @Override
+    public void saveAgendamento(Agendamento agendamento) {
+        try {
+            String filename = AGENDAMENTOS_DIR + File.separator + agendamento.getId() + ".bin";
+            
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+                oos.writeObject(agendamento);
+            }
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to save agendamento: " + agendamento.getId(), e);
+        }
+    }
+
+    @Override
+    public Agendamento loadAgendamento(String id) {
+        try {
+            String filename = AGENDAMENTOS_DIR + File.separator + id + ".bin";
+            
+            if (!Files.exists(Paths.get(filename))) {
+                throw new RepositoryException("Agendamento not found: " + id);
+            }
+            
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+                return (Agendamento) ois.readObject();
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RepositoryException("Failed to load agendamento: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAllAgendamentos() {
+        try {
+            List<Agendamento> agendamentos = new ArrayList<>();
+            Path agendamentosPath = Paths.get(AGENDAMENTOS_DIR);
+            
+            if (!Files.exists(agendamentosPath)) {
+                return agendamentos;
+            }
+            
+            try (var stream = Files.list(agendamentosPath)) {
+                stream.filter(path -> path.toString().endsWith(".bin"))
+                      .forEach(path -> {
+                          try {
+                              String filename = path.getFileName().toString();
+                              String id = filename.substring(0, filename.length() - 4); // Remove .bin
+                              agendamentos.add(loadAgendamento(id));
+                          } catch (Exception e) {
+                              // Log error but continue loading others
+                              System.err.println("Error loading agendamento from " + path + ": " + e.getMessage());
+                          }
+                      });
+            }
+            
+            return agendamentos;
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to get all agendamentos", e);
+        }
+    }
+
+    @Override
+    public void deleteAgendamento(String id) {
+        try {
+            String filename = AGENDAMENTOS_DIR + File.separator + id + ".bin";
+            Path filePath = Paths.get(filename);
+            
+            if (!Files.exists(filePath)) {
+                throw new RepositoryException("Agendamento not found: " + id);
+            }
+            
+            Files.delete(filePath);
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to delete agendamento: " + id, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosByPaciente(String pacienteUsername) {
+        try {
+            return getAllAgendamentos().stream()
+                    .filter(agendamento -> pacienteUsername.equals(agendamento.getPacienteUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by paciente: " + pacienteUsername, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosByProfissional(String profissionalUsername) {
+        try {
+            return getAllAgendamentos().stream()
+                    .filter(agendamento -> profissionalUsername.equals(agendamento.getProfissionalUsername()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by profissional: " + profissionalUsername, e);
+        }
+    }
+
+    @Override
+    public List<Agendamento> getAgendamentosBySala(String salaId) {
+        try {
+            return getAllAgendamentos().stream()
+                    .filter(agendamento -> salaId.equals(agendamento.getSalaId()))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to get agendamentos by sala: " + salaId, e);
         }
     }
 }
