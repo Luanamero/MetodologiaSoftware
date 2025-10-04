@@ -5,6 +5,7 @@ import com.medapp.infra.Repository;
 import com.medapp.infra.RepositoryFactory;
 import com.medapp.views.UsuarioInterfaceGrafica;
 import com.medapp.views.RelatorioInterfaceGrafica;
+import com.medapp.views.AgendamentoInterfaceGrafica;
 
 /**
  * Classe principal do Sistema Médico - Cirurgia Sem Fronteiras v2.0.0
@@ -80,9 +81,15 @@ public class Main {
             System.out.println("✓ Abrindo interface de relatórios...");
             RelatorioInterfaceGrafica.iniciar(facade);
             
+            // Aguardar um pouco e abrir interface de agendamentos
+            Thread.sleep(1000);
+            System.out.println("✓ Abrindo interface de agendamentos...");
+            AgendamentoInterfaceGrafica.iniciar(facade);
+            
             System.out.println("\n=== INTERFACES GRÁFICAS ATIVAS ===");
             System.out.println("- Interface de Usuários: Gerenciamento de usuários do sistema");
             System.out.println("- Interface de Relatórios: Criação e gerenciamento de relatórios");
+            System.out.println("- Interface de Agendamentos: Gerenciamento de consultas e procedimentos");
             System.out.println("\nUse as interfaces para interagir com o sistema.");
             System.out.println("Argumentos disponíveis:");
             System.out.println("  - Repositório: ram, db, file");

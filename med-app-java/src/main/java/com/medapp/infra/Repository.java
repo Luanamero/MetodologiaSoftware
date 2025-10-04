@@ -3,6 +3,7 @@ package com.medapp.infra;
 import com.medapp.models.User;
 import com.medapp.models.Sala;
 import com.medapp.models.Relatorio;
+import com.medapp.models.Agendamento;
 import java.util.List;
 
 /**
@@ -33,4 +34,13 @@ public interface Repository {
     List<Relatorio> getAllRelatorios();
     void deleteRelatorio(String id);
     List<Relatorio> getRelatoriosByAutor(String autorUsername);
+    
+    // Métodos para Agendamento
+    void saveAgendamento(Agendamento agendamento);
+    Agendamento loadAgendamento(String id);
+    List<Agendamento> getAllAgendamentos();
+    void deleteAgendamento(String id);
+    List<Agendamento> getAgendamentosByPaciente(String pacienteUsername);
+    List<Agendamento> getAgendamentosByProfissional(String profissionalUsername);
+    List<Agendamento> getAgendamentosBySala(String salaId);
 }
