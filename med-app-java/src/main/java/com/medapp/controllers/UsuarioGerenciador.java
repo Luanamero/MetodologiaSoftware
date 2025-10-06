@@ -132,9 +132,27 @@ public class UsuarioGerenciador {
     // Métodos privados para reduzir duplicação de código
     private void validarECriarUsuario(UserCreator creator) throws Exception {
         User usuario = creator.create();
+        // Verificar duplicidade de username
+        try {
+            User existente = userRepository.loadUser(usuario.getUsername());
+            if (existente != null) {
+                throw new UserException("Username já existe: " + usuario.getUsername());
+            }
+        } catch (Exception e) {
+            // Se lançar exceção de not found, seguimos; outros erros sobem
+            if (e instanceof com.medapp.utils.storage.UserNotFoundException) {
+                // ok, não existe
+            } else if (!(e instanceof RuntimeException)) {
+                // erros não-runtime são considerados falhas de repositório
+                throw e;
+            } else if (!(e instanceof com.medapp.utils.storage.UserNotFoundException)) {
+                throw e;
+            }
+        }
+
         userRepository.saveUser(usuario);
-        
-        // Remove usuário existente da lista local se houver, antes de adicionar o novo
+
+        // Atualizar cache local
         usuarios.removeIf(u -> u.getUsername().equals(usuario.getUsername()));
         usuarios.add(usuario);
     }

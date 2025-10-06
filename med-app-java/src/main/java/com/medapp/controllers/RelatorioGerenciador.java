@@ -33,6 +33,21 @@ public class RelatorioGerenciador {
 
     public boolean criarRelatorio(String titulo, String conteudo, String tipoRelatorio, String autorUsername) {
         try {
+            // Impedir paciente de gerar relatório
+            try {
+                com.medapp.models.User autor = repository.loadUser(autorUsername);
+                if (autor != null && "Paciente".equals(autor.getTipoUsuario())) {
+                    throw new IllegalStateException("Pacientes não podem gerar relatórios");
+                }
+            } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    // Propaga erros inesperados
+                    throw e;
+                }
+                // Se o autor não existir ou houver erro checando, considerar como falha
+                throw new IllegalStateException("Não foi possível validar autor do relatório: " + autorUsername);
+            }
+
             String id = UUID.randomUUID().toString();
             Relatorio relatorio = new Relatorio(id, titulo, conteudo, tipoRelatorio, autorUsername);
             relatorio.setDataGeracao(LocalDateTime.now());

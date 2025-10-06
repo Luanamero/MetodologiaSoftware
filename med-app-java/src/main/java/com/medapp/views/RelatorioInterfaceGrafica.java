@@ -245,7 +245,9 @@ public class RelatorioInterfaceGrafica extends JFrame {
             
             List<com.medapp.models.User> usuarios = facade.listarUsuarios();
             for (com.medapp.models.User usuario : usuarios) {
-                comboAutor.addItem(usuario.getUsername());
+                if (!"Paciente".equals(usuario.getTipoUsuario())) {
+                    comboAutor.addItem(usuario.getUsername());
+                }
             }
             
             if (comboAutor.getItemCount() > 1) {
